@@ -13,7 +13,6 @@ class Env {
   
   init () {
     self.configVars = Bundle.main.infoDictionary! as NSDictionary
-    print(self.configVars)
   }
   
   func fetch(key: String) -> String {

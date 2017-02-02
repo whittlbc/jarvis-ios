@@ -18,13 +18,21 @@ class LoginController {
     self.env = Env()
   }
   
+  func signup() -> Void {
+    self.userAuth(method: "signup")
+  }
+  
   func login() -> Void {
+    self.userAuth(method: "login")
+  }
+  
+  func userAuth(method: String) -> Void {
     let params: Parameters = ["email": "benwhittle31@gmail.com", "password": "password"]
     
-    self.requests.post(endpoint: "/login", params: params).responseJSON { response in
-      if (self.requests.failed(response: response)) {
-        return
-      } else {
+    self.requests.post(endpoint: ("/" + method), params: params).responseJSON { response in
+      let statusCode = response.response?.statusCode
+      
+      if (statusCode == 200) {
         let headerFields = response.response?.allHeaderFields as? [String: String]
         let reqUrl = response.request?.url
         
@@ -37,6 +45,12 @@ class LoginController {
             NotificationCenter.default.post(name: Notification.Name("user:authed"), object: nil)
           }
         }
+      } else if (statusCode == 1000) {
+        // Incomplete Login Credentials
+      } else if (statusCode == 1002) {
+        // Email already in use
+      } else {
+        // General user auth error
       }
     }
   }
