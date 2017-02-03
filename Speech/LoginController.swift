@@ -41,7 +41,13 @@ class LoginController {
           let cookie = cookies.first(where:{$0.name == self.env.fetch(key: "COOKIE_NAME")})
           
           if (cookie != nil) {
+            // Update the Request token property
             self.requests.setSession(token: cookie!.value)
+            
+            // Store the session token in local storage
+            UserDefaults.standard.setValue(cookie!.value, forKey: self.env.fetch(key: "SESSION_HEADER"))
+            
+            // Let our main ViewController know our user is now authed
             NotificationCenter.default.post(name: Notification.Name("user:authed"), object: nil)
           }
         }

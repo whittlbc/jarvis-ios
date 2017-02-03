@@ -21,15 +21,28 @@ class ViewController : UIViewController {
   var audioHelper: AudioHelper!
   var requests: Requests!
   var loginController: LoginController!
+  var env: Env!
   
   override func viewDidLoad() {
     super.viewDidLoad()
     
+    self.env = Env()
     self.requests = Requests()
+    
+    // If session token has been stored locally, use that for auth.
+    if let sessionToken = UserDefaults.standard.string(forKey: self.env.fetch(key: "SESSION_HEADER")) {
+      self.requests.setSession(token: sessionToken)
+    }
+    
     self.loginController = LoginController(requests: self.requests)
 
     self.addEventListeners()
-    self.loginController.login()
+    
+    if (self.requests.token == nil) {
+      self.loginController.login()
+    } else {
+      self.connectToSocket()
+    }
   }
   
   func addEventListeners() -> Void {
