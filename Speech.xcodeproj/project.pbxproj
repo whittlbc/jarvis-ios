@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		09A275651E419F2B00545390 /* LoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A275641E419F2B00545390 /* LoginController.swift */; };
 		09A275671E42C2D700545390 /* attention.wav in Resources */ = {isa = PBXBuildFile; fileRef = 09A275661E42C2D700545390 /* attention.wav */; };
+		09C06E441E4851B8001C21A0 /* ApiAIController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C06E431E4851B8001C21A0 /* ApiAIController.swift */; };
 		09F503651E3AF96400D6B897 /* SocketController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09F503641E3AF96400D6B897 /* SocketController.swift */; };
 		09F503671E3B011400D6B897 /* AudioRecordService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09F503661E3B011400D6B897 /* AudioRecordService.swift */; };
 		09F5036D1E3C0CDC00D6B897 /* AudioHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09F5036C1E3C0CDC00D6B897 /* AudioHelper.swift */; };
@@ -27,6 +28,7 @@
 /* Begin PBXFileReference section */
 		09A275641E419F2B00545390 /* LoginController.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = LoginController.swift; sourceTree = "<group>"; tabWidth = 2; };
 		09A275661E42C2D700545390 /* attention.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = attention.wav; sourceTree = "<group>"; };
+		09C06E431E4851B8001C21A0 /* ApiAIController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ApiAIController.swift; sourceTree = "<group>"; };
 		09F503641E3AF96400D6B897 /* SocketController.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SocketController.swift; sourceTree = "<group>"; tabWidth = 2; };
 		09F503661E3B011400D6B897 /* AudioRecordService.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = AudioRecordService.swift; sourceTree = "<group>"; tabWidth = 2; };
 		09F5036C1E3C0CDC00D6B897 /* AudioHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = AudioHelper.swift; sourceTree = "<group>"; tabWidth = 2; };
@@ -109,6 +111,7 @@
 				09F5036E1E402D8A00D6B897 /* Requests.swift */,
 				09F503701E40598700D6B897 /* Env.swift */,
 				09A275641E419F2B00545390 /* LoginController.swift */,
+				09C06E431E4851B8001C21A0 /* ApiAIController.swift */,
 			);
 			path = Speech;
 			sourceTree = "<group>";
@@ -261,6 +264,7 @@
 				D31E0EB81D778A56006A50AB /* SpeechRecognitionService.swift in Sources */,
 				D3E34EA51D7757CC00EF755D /* ViewController.swift in Sources */,
 				D3E34EA11D77541D00EF755D /* AppDelegate.swift in Sources */,
+				09C06E441E4851B8001C21A0 /* ApiAIController.swift in Sources */,
 				09F503651E3AF96400D6B897 /* SocketController.swift in Sources */,
 				09F5036F1E402D8A00D6B897 /* Requests.swift in Sources */,
 				09A275651E419F2B00545390 /* LoginController.swift in Sources */,
@@ -367,6 +371,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C2D2368DBC8898A52FE6113B /* Pods-Speech.debug.xcconfig */;
 			buildSettings = {
+				API_AI_KEY = a0e953e01a944df3a23d7f6d9c636aa2;
 				APP_URL = "http://localhost:5000";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -393,6 +398,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5E83ACE29B0D0DF0085BA8F2 /* Pods-Speech.release.xcconfig */;
 			buildSettings = {
+				API_AI_KEY = a0e953e01a944df3a23d7f6d9c636aa2;
 				APP_URL = "http://localhost:5000";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

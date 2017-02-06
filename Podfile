@@ -11,6 +11,7 @@ target 'Speech' do
   pod 'googleapis', :path => '.'
   pod 'Socket.IO-Client-Swift', '~> 8.2.0'
   pod 'Alamofire', '~> 4.3'
+  pod 'ApiAI'
   
 end
 

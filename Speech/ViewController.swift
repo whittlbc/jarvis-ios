@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 import UIKit
+import ApiAI
+import AVFoundation
 
 class ViewController : UIViewController {
   var socketController: SocketController!
@@ -22,9 +24,12 @@ class ViewController : UIViewController {
   var requests: Requests!
   var loginController: LoginController!
   var env: Env!
+  var apiaiController: ApiAIController!
   
   override func viewDidLoad() {
     super.viewDidLoad()
+    
+    self.apiaiController = ApiAIController()
     
     self.env = Env()
     self.requests = Requests()
@@ -51,10 +56,40 @@ class ViewController : UIViewController {
     NotificationCenter.default.addObserver(self, selector: #selector(handlePlaySoundbite), name: NSNotification.Name(rawValue: "soundbite:play"), object:nil)
     
     NotificationCenter.default.addObserver(self, selector: #selector(connectToSocket), name: NSNotification.Name(rawValue: "user:authed"), object:nil)
+    
+    NotificationCenter.default.addObserver(self, selector: #selector(handleApiAiResp), name: NSNotification.Name(rawValue: "apiai:response"), object:nil)
   }
   
   func handleNewVoiceCommand(notification: NSNotification) {
-    self.socketController.sendMessage(data: notification.object as! NSDictionary)
+    print("Heard handle voice command")
+    if let dict = notification.object as? NSDictionary {
+      let query = dict["text"] as! String
+      print("Query: \(query)")
+      self.apiaiController.getIntent(query: query)
+    }
+  }
+  
+  func handleApiAiResp(notification: NSNotification) {
+    if let data = notification.object as? NSDictionary {
+      let response = data["response"] as! AIResponse
+      let fulfillment = response.result.fulfillment as AIResponseFulfillment
+      let speech = fulfillment.speech!
+      
+      if (speech.isEmpty) {
+        // Send response over to server to perform action
+        // You can prolly send it all over as JSON somehow
+        // self.socketController.sendMessage(data: data)
+      } else {
+        let synth = AVSpeechSynthesizer()
+        let utterance = AVSpeechUtterance(string: speech)
+        utterance.rate = 0.48
+        utterance.pitchMultiplier = 1.25
+        synth.speak(utterance)
+      }
+
+//      let action = response.result.action
+//      let params = response.result.parameters as? [String: AIResponseParameter]
+    }
   }
   
   func handlePlaySoundbite(notification: NSNotification) {

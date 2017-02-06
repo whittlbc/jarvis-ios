@@ -106,6 +106,8 @@ class AudioRecordService: AudioControllerDelegate {
         let topResultWords = topResult?.lowercased().components(separatedBy: " ")
         let containsBotName = topResultWords?.contains(BOT_NAME.lowercased())
 
+        print(topResult!)
+        
         if (self.listeningForPrompt && containsBotName!) {
           self.stopAudio()
           self.listeningForPrompt = false

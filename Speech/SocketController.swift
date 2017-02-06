@@ -65,15 +65,15 @@ class SocketController {
       utterance.rate = 0.48
       utterance.pitchMultiplier = 1.25
       
-      for voice in AVSpeechSynthesisVoice.speechVoices() {
-        if #available(iOS 9.0, *) {
-          if voice.name == "Daniel" {
-            utterance.voice = voice
-            utterance.rate = 0.5
-            utterance.pitchMultiplier = 1.3
-          }
-        } 
-      }
+      //for voice in AVSpeechSynthesisVoice.speechVoices() {
+      //  if #available(iOS 9.0, *) {
+      //    if voice.name == "Daniel" {
+      //      utterance.voice = voice
+      //      utterance.rate = 0.5
+      //      utterance.pitchMultiplier = 1.3
+      //    }
+      //  }
+      //}
       
       synth.speak(utterance)
     }

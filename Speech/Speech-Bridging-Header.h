@@ -4,3 +4,6 @@
 
 #import <googleapis/CloudSpeech.pbobjc.h>
 #import <googleapis/CloudSpeech.pbrpc.h>
+
+#import <ApiAI/ApiAI.h>
+#import <ApiAI/AIDefaultConfiguration.h>

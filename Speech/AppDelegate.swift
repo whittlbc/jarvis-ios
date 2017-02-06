@@ -14,16 +14,24 @@
 // limitations under the License.
 //
 import UIKit
+import ApiAI
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
   
+  let apiai = ApiAI.shared()!
+  let env = Env()
   var window: UIWindow?
   
   func application
     (_ application: UIApplication,
      didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil)
     -> Bool {
+      
+      let configuration: AIConfiguration = AIDefaultConfiguration()
+      configuration.clientAccessToken = env.fetch(key: "API_AI_KEY")
+      apiai.configuration = configuration
+      
       return true
   }
 }
