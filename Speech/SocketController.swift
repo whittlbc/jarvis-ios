@@ -31,8 +31,14 @@ class SocketController {
   }
   
   func addListeners() -> Void {
+    self.socket.on("user_info:fetched") {data, ack in
+      if let resp = data[0] as? NSDictionary {
+        NotificationCenter.default.post(name: Notification.Name("user_info:fetched"), object: resp)
+      }
+    }
+    
     self.socket.on("connect") {data, ack in
-      print("socket connected")
+      self.socket.emit("fetch:user_info")
     }
     
     self.socket.on("response") {data, ack in

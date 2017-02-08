@@ -58,13 +58,13 @@ class ViewController : UIViewController {
     NotificationCenter.default.addObserver(self, selector: #selector(connectToSocket), name: NSNotification.Name(rawValue: "user:authed"), object:nil)
     
     NotificationCenter.default.addObserver(self, selector: #selector(handleApiAiResp), name: NSNotification.Name(rawValue: "apiai:response"), object:nil)
+    
+    NotificationCenter.default.addObserver(self, selector: #selector(handleUserInfo), name: NSNotification.Name(rawValue: "user_info:fetched"), object:nil)
   }
   
   func handleNewVoiceCommand(notification: NSNotification) {
-    print("Heard handle voice command")
     if let dict = notification.object as? NSDictionary {
       let query = dict["text"] as! String
-      print("Query: \(query)")
       self.apiaiController.getIntent(query: query)
     }
   }
@@ -75,20 +75,54 @@ class ViewController : UIViewController {
       let fulfillment = response.result.fulfillment as AIResponseFulfillment
       let speech = fulfillment.speech!
       
-      if (speech.isEmpty) {
+      let action = response.result.action
+      
+      // use action to query a dictionary for the info you need about what to do
+      
+
+      
+//      if (speech.isEmpty) {
         // Send response over to server to perform action
         // You can prolly send it all over as JSON somehow
         // self.socketController.sendMessage(data: data)
-      } else {
-        let synth = AVSpeechSynthesizer()
-        let utterance = AVSpeechUtterance(string: speech)
-        utterance.rate = 0.48
-        utterance.pitchMultiplier = 1.25
-        synth.speak(utterance)
-      }
+//      } else {
+//        let synth = AVSpeechSynthesizer()
+//        let utterance = AVSpeechUtterance(string: speech)
+//        utterance.rate = 0.48
+//        utterance.pitchMultiplier = 1.25
+//        synth.speak(utterance)
+//      }
 
 //      let action = response.result.action
 //      let params = response.result.parameters as? [String: AIResponseParameter]
+    }
+  }
+  
+  func handleUserInfo(notification: NSNotification) {
+    if let data = notification.object as? NSDictionary {
+      if let userName = data["user_name"] as? String {
+        UserDefaults.standard.setValue(userName, forKey: "user:name")
+      }
+      
+      if let botName = data["bot_name"] as? String {
+        UserDefaults.standard.setValue(botName, forKey: "bot:name")
+      }
+      
+      if (data["actions"] as? NSDictionary) != nil {
+        let actions = data["actions"] as! NSDictionary
+        var attentionPrompts = actions["attentionPropmts"] as? NSArray
+        var customPrompts = actions["customPrompts"] as? NSArray
+        
+        if (attentionPrompts == nil) {
+          attentionPrompts = ["^(hey|ok|okay|yo) <BOT_NAME>$"]
+        }
+        
+        if (customPrompts == nil) {
+          customPrompts = []
+        }
+        
+        self.startSpeechRecognition(attentionPrompts: attentionPrompts!, customPrompts: customPrompts!)
+      }
     }
   }
   
@@ -98,17 +132,15 @@ class ViewController : UIViewController {
     }
   }
   
+  // init socket and open it
   func connectToSocket() -> Void {
-    // init socket and open it
     self.socketController = SocketController(token: self.requests.token)
     self.socketController.open()
-    
-    self.startSpeechRecognition()
   }
-  
-  func startSpeechRecognition() -> Void {
-    // init microphone audio recording/speech-recog service
-    self.audioRecordService = AudioRecordService()
+
+  // init microphone audio recording/speech-recog service
+  func startSpeechRecognition(attentionPrompts: NSArray, customPrompts: NSArray) -> Void {
+    self.audioRecordService = AudioRecordService(attentionPrompts: attentionPrompts, customPrompts: customPrompts)
     self.audioHelper = AudioHelper()
     self.audioRecordService.perform()
   }
