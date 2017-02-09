@@ -60,7 +60,7 @@ class SocketController {
     let attachments = resp["attachments"] as? NSDictionary
     // take care of ts too
     
-    print("Got Response: \(text!) with attachments: \(attachments!)")
+    print("Got Response: \(text) with attachments: \(attachments)")
     
     // add message to feed
     

@@ -106,21 +106,35 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
       let speech = fulfillment.speech!
       
       if (!speech.isEmpty) {
-        self.audioHelper.speak(text: speech)
+//        self.audioHelper.speak(text: speech)
       }
       
-      if (response.result.action != "input.unknown") {
-        let datetime = self.currentDatetime().components(separatedBy: " ")
-        
-        let data = [
-          "intentResult": response.result,
-          "date": datetime[0],
-          "time": datetime[1],
-          "location": self.currentLocation!
-        ] as NSDictionary
-        
-        self.socketController.sendMessage(data: data)
+      let intent = [
+        "query": response.result.resolvedQuery,
+        "action": response.result.action
+      ] as NSMutableDictionary
+      
+      var params: NSMutableDictionary = [:]
+      
+      if let parameters = response.result.parameters as? [String: AIResponseParameter]{
+        for (k, v) in parameters {
+          params[k] = v.stringValue
+        }
       }
+      
+      intent["params"] = params
+      
+//      if (response.result.action != "input.unknown") {
+      let dt = self.currentDatetime().components(separatedBy: " ")
+      let userMetadata = ["date": dt[0], "time": dt[1], "location": self.currentLocation!] as NSDictionary
+      let data = [
+        "intent": intent as NSDictionary,
+        "userMetadata": userMetadata,
+        "withVoice": true
+      ] as NSDictionary
+    
+      self.socketController.sendMessage(data: data)
+//      }
     }
   }
   
@@ -203,8 +217,6 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
             self.currentLocation?[currLocKey as! String] = val
           }
         }
-        
-        print(self.currentLocation!)
       } else {
         print("Error fetching reverse geocode location... \(error)")
       }
