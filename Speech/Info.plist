@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Jarvis would like to use your current location.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Jarvis would like to use your current location.</string>
 	<key>API_AI_KEY</key>
 	<string>$(API_AI_KEY)</string>
 	<key>SESSION_HEADER</key>

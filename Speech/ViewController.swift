@@ -16,8 +16,10 @@
 import UIKit
 import ApiAI
 import AVFoundation
+import MapKit
+import CoreLocation
 
-class ViewController : UIViewController {
+class ViewController : UIViewController, CLLocationManagerDelegate {
   var socketController: SocketController!
   var audioRecordService: AudioRecordService!
   var audioHelper: AudioHelper!
@@ -25,14 +27,18 @@ class ViewController : UIViewController {
   var loginController: LoginController!
   var env: Env!
   var apiaiController: ApiAIController!
-  
+  var locationManager: CLLocationManager!
+  var currentLocation: NSMutableDictionary?
+
   override func viewDidLoad() {
     super.viewDidLoad()
     
     self.apiaiController = ApiAIController()
-    
+    self.setupLocationManager()
     self.env = Env()
     self.requests = Requests()
+    
+    self.currentLocation = [:]
     
     // If session token has been stored locally, use that for auth.
     if let sessionToken = UserDefaults.standard.string(forKey: self.env.fetch(key: "SESSION_HEADER")) {
@@ -50,6 +56,22 @@ class ViewController : UIViewController {
     }
   }
   
+  func setupLocationManager() -> Void {
+    self.locationManager = CLLocationManager()
+
+    // Ask for Authorization from the User.
+    self.locationManager.requestAlwaysAuthorization()
+    
+    // For use in foreground
+    self.locationManager.requestWhenInUseAuthorization()
+    
+    if CLLocationManager.locationServicesEnabled() {
+      locationManager.delegate = self
+      locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+      locationManager.startUpdatingLocation()
+    }
+  }
+  
   func addEventListeners() -> Void {
     NotificationCenter.default.addObserver(self, selector: #selector(handleNewVoiceCommand), name: NSNotification.Name(rawValue: "voiceCommand:new"), object:nil)
     
@@ -60,6 +82,14 @@ class ViewController : UIViewController {
     NotificationCenter.default.addObserver(self, selector: #selector(handleApiAiResp), name: NSNotification.Name(rawValue: "apiai:response"), object:nil)
     
     NotificationCenter.default.addObserver(self, selector: #selector(handleUserInfo), name: NSNotification.Name(rawValue: "user_info:fetched"), object:nil)
+    
+    NotificationCenter.default.addObserver(self, selector: #selector(handlePassThroughSpeech), name: NSNotification.Name(rawValue: "text:speak"), object:nil)
+  }
+  
+  func handlePassThroughSpeech(notification: NSNotification) {
+    if let dict = notification.object as? NSDictionary {
+      self.audioHelper.speak(text: dict["text"] as! String)
+    }
   }
   
   func handleNewVoiceCommand(notification: NSNotification) {
@@ -75,26 +105,22 @@ class ViewController : UIViewController {
       let fulfillment = response.result.fulfillment as AIResponseFulfillment
       let speech = fulfillment.speech!
       
-      let action = response.result.action
+      if (!speech.isEmpty) {
+        self.audioHelper.speak(text: speech)
+      }
       
-      // use action to query a dictionary for the info you need about what to do
-      
-
-      
-//      if (speech.isEmpty) {
-        // Send response over to server to perform action
-        // You can prolly send it all over as JSON somehow
-        // self.socketController.sendMessage(data: data)
-//      } else {
-//        let synth = AVSpeechSynthesizer()
-//        let utterance = AVSpeechUtterance(string: speech)
-//        utterance.rate = 0.48
-//        utterance.pitchMultiplier = 1.25
-//        synth.speak(utterance)
-//      }
-
-//      let action = response.result.action
-//      let params = response.result.parameters as? [String: AIResponseParameter]
+      if (response.result.action != "input.unknown") {
+        let datetime = self.currentDatetime().components(separatedBy: " ")
+        
+        let data = [
+          "intentResult": response.result,
+          "date": datetime[0],
+          "time": datetime[1],
+          "location": self.currentLocation!
+        ] as NSDictionary
+        
+        self.socketController.sendMessage(data: data)
+      }
     }
   }
   
@@ -143,6 +169,46 @@ class ViewController : UIViewController {
     self.audioRecordService = AudioRecordService(attentionPrompts: attentionPrompts, customPrompts: customPrompts)
     self.audioHelper = AudioHelper()
     self.audioRecordService.perform()
+  }
+  
+  func currentDatetime() -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd HH:mm"
+    return formatter.string(from: Date())
+  }
+  
+  func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    let locValue: CLLocationCoordinate2D = manager.location!.coordinate
+    let coordinates: NSArray = [locValue.latitude, locValue.longitude]
+    
+    self.currentLocation?["coordinates"] = coordinates
+    
+    CLGeocoder().reverseGeocodeLocation(manager.location!, completionHandler: { (placemarks, error) -> Void in
+      if (error == nil) {
+        var location: CLPlacemark!
+        location = placemarks?[0]
+        
+        let keysMap: NSDictionary = [
+          "Name": "name",
+          "Thoroughfare": "street",
+          "City": "city",
+          "State": "state",
+          "ZIP": "zip",
+          "Country": "country",
+          "CountryCode": "countryCode"
+        ]
+        
+        for (addrKey, currLocKey) in keysMap {
+          if let val = location.addressDictionary![addrKey as! String] as? NSString {
+            self.currentLocation?[currLocKey as! String] = val
+          }
+        }
+        
+        print(self.currentLocation!)
+      } else {
+        print("Error fetching reverse geocode location... \(error)")
+      }
+    })
   }
   
 }

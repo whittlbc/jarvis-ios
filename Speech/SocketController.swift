@@ -60,28 +60,13 @@ class SocketController {
     let attachments = resp["attachments"] as? NSDictionary
     // take care of ts too
     
-    print("Got Response: \(text) with attachments: \(attachments)")
+    print("Got Response: \(text!) with attachments: \(attachments!)")
     
     // add message to feed
     
     if (withVoice && soundbiteUrl == nil) {
-      let synth = AVSpeechSynthesizer()
-      let utterance = AVSpeechUtterance(string: text!)
-      
-      utterance.rate = 0.48
-      utterance.pitchMultiplier = 1.25
-      
-      //for voice in AVSpeechSynthesisVoice.speechVoices() {
-      //  if #available(iOS 9.0, *) {
-      //    if voice.name == "Daniel" {
-      //      utterance.voice = voice
-      //      utterance.rate = 0.5
-      //      utterance.pitchMultiplier = 1.3
-      //    }
-      //  }
-      //}
-      
-      synth.speak(utterance)
+      let data = ["text": text!] as [String : Any]
+      NotificationCenter.default.post(name: Notification.Name("text:speak"), object: data)
     }
     
     if (soundbiteUrl != nil) {

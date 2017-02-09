@@ -30,8 +30,19 @@ class AudioHelper: NSObject, AVSpeechSynthesizerDelegate {
   
   func speak(text: String) -> Void {
     let utterance = AVSpeechUtterance(string: text)
-//    utterance.rate = 0.48
-//    utterance.pitchMultiplier = 1.25
+    utterance.rate = 0.45
+    utterance.pitchMultiplier = 1.25
+    
+    //for voice in AVSpeechSynthesisVoice.speechVoices() {
+    //  if #available(iOS 9.0, *) {
+    //    if voice.name == "Daniel" {
+    //      utterance.voice = voice
+    //      utterance.rate = 0.5
+    //      utterance.pitchMultiplier = 1.3
+    //    }
+    //  }
+    //}
+    
     self.synth.speak(utterance)
   }
   
