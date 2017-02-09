@@ -107,6 +107,9 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
             
             if (error.localizedDescription.hasPrefix("Audio data is being streamed too slow")) {
               print("Disabling speech recognition. Wifi currently not fast enough.")
+            } else if (error.localizedDescription.hasPrefix("Audio data is being streamed too fast")) {
+              print("Audio is being streamed too fast..restarting after 1 second.")
+              Timer.scheduledTimer(timeInterval: 1.0, target: strongSelf, selector: #selector(strongSelf.recordAudio), userInfo: nil, repeats: false)
             } else {
               print("Restarting...")
               strongSelf.recordAudio()
