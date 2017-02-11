@@ -106,7 +106,7 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
       let speech = fulfillment.speech!
       
       if (!speech.isEmpty) {
-//        self.audioHelper.speak(text: speech)
+        self.audioHelper.speak(text: speech)
       }
       
       let intent = [
@@ -124,17 +124,17 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
       
       intent["params"] = params
       
-//      if (response.result.action != "input.unknown") {
-      let dt = self.currentDatetime().components(separatedBy: " ")
-      let userMetadata = ["date": dt[0], "time": dt[1], "location": self.currentLocation!] as NSDictionary
-      let data = [
-        "intent": intent as NSDictionary,
-        "userMetadata": userMetadata,
-        "withVoice": true
-      ] as NSDictionary
-    
-      self.socketController.sendMessage(data: data)
-//      }
+      if (response.result.action != "input.unknown") {
+        let dt = self.currentDatetime().components(separatedBy: " ")
+        let userMetadata = ["date": dt[0], "time": dt[1], "location": self.currentLocation!] as NSDictionary
+        let data = [
+          "intent": intent as NSDictionary,
+          "userMetadata": userMetadata,
+          "withVoice": true
+        ] as NSDictionary
+      
+        self.socketController.sendMessage(data: data)
+      }
     }
   }
   
@@ -218,7 +218,7 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
           }
         }
       } else {
-        print("Error fetching reverse geocode location... \(error)")
+        print("Error fetching reverse geocode location... \(error!)")
       }
     })
   }

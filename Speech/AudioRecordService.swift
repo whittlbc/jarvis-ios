@@ -136,6 +136,8 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
           } else if (result.isFinal) {
             let prompt = self.getMatchingCustomPrompt(text: topResult as NSString)
             
+            print("PROMPT: \(prompt)")
+            
             if (prompt != nil) {
               if let responses = prompt!["responses"] as? NSArray {
                 if (responses.count > 0) {
@@ -217,6 +219,8 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   }
   
   func doneSpeaking(notification: NSNotification) {
+    print("DONE SPEAKING")
+    
     self.recordAudio()
   }
   
