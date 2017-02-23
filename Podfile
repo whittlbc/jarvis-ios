@@ -7,11 +7,10 @@ platform :ios, '8.0'
 use_frameworks!
 
 target 'Speech' do
-
   pod 'googleapis', :path => '.'
   pod 'Socket.IO-Client-Swift', '~> 8.2.0'
   pod 'Alamofire', '~> 4.3'
   pod 'ApiAI'
-  
+  pod 'AWSPolly', '~> 2.5.0'
 end
 

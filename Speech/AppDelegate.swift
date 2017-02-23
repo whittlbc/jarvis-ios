@@ -15,6 +15,7 @@
 //
 import UIKit
 import ApiAI
+import AWSCore
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -28,9 +29,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
      didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil)
     -> Bool {
       
-      let configuration: AIConfiguration = AIDefaultConfiguration()
-      configuration.clientAccessToken = env.fetch(key: "API_AI_KEY")
-      apiai.configuration = configuration
+      let apiaiConfiguration: AIConfiguration = AIDefaultConfiguration()
+      apiaiConfiguration.clientAccessToken = env.fetch(key: "API_AI_KEY")
+      apiai.configuration = apiaiConfiguration
+      
+      let credentialProvider = AWSCognitoCredentialsProvider(
+        regionType: AWSRegionType.USWest2,
+        identityPoolId: env.fetch(key: "AWS_IDENTITY_POOL_ID")
+      )
+      
+      let awsConfiguration = AWSServiceConfiguration(
+        region: AWSRegionType.USWest2,
+        credentialsProvider: credentialProvider
+      )
+      
+      AWSServiceManager.default().defaultServiceConfiguration = awsConfiguration
       
       return true
   }

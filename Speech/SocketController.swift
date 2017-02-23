@@ -49,7 +49,6 @@ class SocketController {
   }
   
   func sendMessage(data: NSDictionary) -> Void {
-    print("SENDING MESSAGE: \(data)")
     self.socket.emit("message", data)
   }
   
@@ -57,20 +56,18 @@ class SocketController {
     let text = resp["text"] as? String
     let soundbiteUrl = resp["soundbiteUrl"] as? String
     let withVoice = resp["withVoice"] as! Bool
-    let attachments = resp["attachments"] as? NSDictionary
-    // take care of ts too
+//    let attachments = resp["attachments"] as? NSDictionary // --> Don't need yet
+    var postResponsePrompt = resp["postResponsePrompt"] as? NSDictionary
     
-    print("Got Response: \(text) with attachments: \(attachments)")
-    
-    // add message to feed
-    
-    if (withVoice && soundbiteUrl == nil) {
-      let data = ["text": text!] as [String : Any]
-      NotificationCenter.default.post(name: Notification.Name("text:speak"), object: data)
+    if (postResponsePrompt == nil) {
+      postResponsePrompt = [:]
     }
     
-    if (soundbiteUrl != nil) {
-      let data = ["urlString": soundbiteUrl!] as [String : Any]
+    if (withVoice && soundbiteUrl == nil) {
+      let data = ["text": text!, "prompt": postResponsePrompt!] as [String : Any]
+      NotificationCenter.default.post(name: Notification.Name("text:speak"), object: data)
+    } else if (soundbiteUrl != nil) {
+      let data = ["urlString": soundbiteUrl!, "prompt": postResponsePrompt!] as [String : Any]
       NotificationCenter.default.post(name: Notification.Name("soundbite:play"), object: data)
     }
   }

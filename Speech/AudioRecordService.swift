@@ -11,7 +11,7 @@ import AVFoundation
 import googleapis
 
 let SAMPLE_RATE = 16000
-let BOT_NAME = "Jarvis"
+let DEFAULT_BOT_NAME = "Jarvis"
 let ATTENTION_SOUND_PATH = "attention.wav"
 
 class AudioRecordService: NSObject, AudioControllerDelegate {
@@ -21,22 +21,28 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   var audioHelper: AudioHelper!
   var listeningForPrompt: Bool
   var listeningForCommand: Bool
+  var listeningForConversation: Bool
   var attentionPrompts: NSArray
   var customPrompts: NSArray
   var botName: String
+  var conversationData: NSDictionary
+  var botIsSpeaking: Bool
   
-  init(attentionPrompts: NSArray, customPrompts: NSArray) {
+  init(audioHelper: AudioHelper, attentionPrompts: NSArray, customPrompts: NSArray) {
+    self.audioHelper = audioHelper
     self.attentionPrompts = attentionPrompts
     self.customPrompts = customPrompts
     self.audioData = NSMutableData()
-    self.audioHelper = AudioHelper()
     self.listeningForPrompt = true
     self.listeningForCommand = false
+    self.listeningForConversation = false
+    self.conversationData = [:]
+    self.botIsSpeaking = false
     
     if let botName = UserDefaults.standard.string(forKey: "bot:name") {
       self.botName = botName
     } else {
-      self.botName = "Jarvis"
+      self.botName = DEFAULT_BOT_NAME
     }
     
     let soundPath = Bundle.main.path(forResource: "attention", ofType: "wav")
@@ -69,8 +75,8 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   
   func recordAudio() -> Void {
     self.audioData = NSMutableData()
-    AudioController.sharedInstance.prepare(specifiedSampleRate: SAMPLE_RATE)
     SpeechRecognitionService.sharedInstance.sampleRate = SAMPLE_RATE
+    AudioController.sharedInstance.prepare(specifiedSampleRate: SAMPLE_RATE)
     AudioController.sharedInstance.start()
   }
   
@@ -107,9 +113,6 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
             
             if (error.localizedDescription.hasPrefix("Audio data is being streamed too slow")) {
               print("Disabling speech recognition. Wifi currently not fast enough.")
-            } else if (error.localizedDescription.hasPrefix("Audio data is being streamed too fast")) {
-              print("Audio is being streamed too fast..restarting after 1 second.")
-              Timer.scheduledTimer(timeInterval: 1.0, target: strongSelf, selector: #selector(strongSelf.recordAudio), userInfo: nil, repeats: false)
             } else {
               print("Restarting...")
               strongSelf.recordAudio()
@@ -124,9 +127,45 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   }
   
   func handleResponse(response: StreamingRecognizeResponse) {
+    if (self.audioHelper.speaking) {
+//      self.botIsSpeaking = true
+      self.stopAudio()
+    }
+    
     for result in response.resultsArray! {
       if let result = result as? StreamingRecognitionResult {
         let topResult = (result.alternativesArray[0] as! SpeechRecognitionAlternative).transcript!.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        
+//        if (self.botIsSpeaking) {
+//          print("BOT IS SPEAKING")
+//          
+//          if (result.isFinal) {
+//              print("BOT SPEECH IS FINAL")
+//              self.botIsSpeaking = false
+//          }
+//          
+//          return
+//        }
+        
+        print(topResult)
+        
+        if (self.listeningForConversation) {
+          if (result.isFinal) {
+            let data = [
+              "text": topResult,
+              "withVoice": true,
+              "action": self.conversationData["action"]!, // do more to protect this
+              "resource_uid": self.conversationData["resource_uid"]!  // do more to protect this
+              ] as [String : Any]
+            
+            NotificationCenter.default.post(name: Notification.Name("conversation:continue"), object: data)
+            
+            self.listeningForConversation = false
+            self.conversationData = [:]
+          }
+          
+          return
+        }
         
         if (self.listeningForPrompt) {
           if (self.triggeredBotAttention(text: topResult as NSString)) {
@@ -136,8 +175,6 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
           } else if (result.isFinal) {
             let prompt = self.getMatchingCustomPrompt(text: topResult as NSString)
             
-            print("PROMPT: \(prompt)")
-            
             if (prompt != nil) {
               if let responses = prompt!["responses"] as? NSArray {
                 if (responses.count > 0) {
@@ -145,8 +182,8 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
                   let randomIndex = Int(arc4random_uniform(UInt32(responses.count)))
                   let response = self.correctedString(text: responses[randomIndex] as! String)
                   
-                  self.stopAudio()
-                  self.audioHelper.speak(text: response)
+//                  self.stopAudio()
+                  self.audioHelper.speak(text: response, emitOnSpeechEnd: nil)
                   return
                 }
               }
@@ -219,9 +256,15 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   }
   
   func doneSpeaking(notification: NSNotification) {
-    print("DONE SPEAKING")
-    
     self.recordAudio()
+    
+    if let data = notification.object as? NSDictionary {
+      self.conversationData = data
+      
+      if (self.conversationData.count > 0) {
+        self.listeningForConversation = true
+      }
+    }
   }
   
 }

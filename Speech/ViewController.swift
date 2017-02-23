@@ -83,12 +83,37 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
     
     NotificationCenter.default.addObserver(self, selector: #selector(handleUserInfo), name: NSNotification.Name(rawValue: "user_info:fetched"), object:nil)
     
-    NotificationCenter.default.addObserver(self, selector: #selector(handlePassThroughSpeech), name: NSNotification.Name(rawValue: "text:speak"), object:nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(handleSpeechResponse), name: NSNotification.Name(rawValue: "text:speak"), object:nil)
+    
+    NotificationCenter.default.addObserver(self, selector: #selector(continueConversation), name: NSNotification.Name(rawValue: "conversation:continue"), object:nil)
   }
   
-  func handlePassThroughSpeech(notification: NSNotification) {
+  func continueConversation(notification: NSNotification) {
+    if let data = notification.object as? NSDictionary {
+      let params: NSDictionary = ["resource_uid": data["resource_uid"]!]
+      
+      let intent = [
+        "query": data["text"]!,
+        "action": data["action"]!,
+        "params": params
+        ] as NSDictionary
+      
+      let dt = self.currentDatetime().components(separatedBy: " ")
+      let userMetadata = ["date": dt[0], "time": dt[1], "location": self.currentLocation!] as NSDictionary
+      
+      let data = [
+        "intent": intent,
+        "userMetadata": userMetadata,
+        "withVoice": data["withVoice"]!
+        ] as NSDictionary
+      
+      self.socketController.sendMessage(data: data)
+    }
+  }
+  
+  func handleSpeechResponse(notification: NSNotification) {
     if let dict = notification.object as? NSDictionary {
-      self.audioHelper.speak(text: dict["text"] as! String)
+      self.audioHelper.speak(text: dict["text"] as! String, emitOnSpeechEnd: dict["prompt"] as? NSDictionary)
     }
   }
   
@@ -106,7 +131,7 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
       let speech = fulfillment.speech!
       
       if (!speech.isEmpty) {
-        self.audioHelper.speak(text: speech)
+        self.audioHelper.speak(text: speech, emitOnSpeechEnd: nil)
       }
       
       let intent = [
@@ -169,6 +194,7 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
   func handlePlaySoundbite(notification: NSNotification) {
     if let data = notification.object as? NSDictionary {
       self.audioHelper.playAudioWithUrl(urlString: data["urlString"] as! String)
+      // TODO: Need to figure out how to add a callback to ^this so that you know exactly when to utilize postResponsePrompt if you need to.
     }
   }
   
@@ -180,8 +206,8 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
 
   // init microphone audio recording/speech-recog service
   func startSpeechRecognition(attentionPrompts: NSArray, customPrompts: NSArray) -> Void {
-    self.audioRecordService = AudioRecordService(attentionPrompts: attentionPrompts, customPrompts: customPrompts)
     self.audioHelper = AudioHelper()
+    self.audioRecordService = AudioRecordService(audioHelper: self.audioHelper, attentionPrompts: attentionPrompts, customPrompts: customPrompts)
     self.audioRecordService.perform()
   }
   
@@ -193,7 +219,9 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
   
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     let locValue: CLLocationCoordinate2D = manager.location!.coordinate
-    let coordinates: NSArray = [locValue.latitude, locValue.longitude]
+    // Hard coding for now
+    let coordinates: NSDictionary = ["lat": 37.458142, "lng": -122.149983]
+//    let coordinates: NSDictionary = ["lat": locValue.latitude, "lng": locValue.longitude]
     
     self.currentLocation?["coordinates"] = coordinates
     
