@@ -22,17 +22,17 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   var listeningForPrompt: Bool
   var listeningForCommand: Bool
   var listeningForConversation: Bool
-  var attentionPrompts: NSArray
+  var attentionPrompt: NSRegularExpression
   var customPrompts: NSArray
   var botName: String
   var conversationData: NSDictionary
   var botIsSpeaking: Bool
   
-  init(audioHelper: AudioHelper, attentionPrompts: NSArray, customPrompts: NSArray) {
+  init(audioHelper: AudioHelper, attentionPrompt: String, customPrompts: NSArray) {
     self.audioHelper = audioHelper
-    self.attentionPrompts = attentionPrompts
     self.customPrompts = customPrompts
     self.audioData = NSMutableData()
+    self.attentionPrompt = NSRegularExpression()
     self.listeningForPrompt = true
     self.listeningForCommand = false
     self.listeningForConversation = false
@@ -53,6 +53,8 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
     } catch {}
     
     super.init()
+    
+    self.attentionPrompt = try! NSRegularExpression(pattern: self.correctedString(text: attentionPrompt), options: [NSRegularExpression.Options.caseInsensitive])
     
     AudioController.sharedInstance.delegate = self
     self.audioSession = AVAudioSession.sharedInstance()
@@ -128,29 +130,17 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
   
   func handleResponse(response: StreamingRecognizeResponse) {
     if (self.audioHelper.speaking) {
-//      self.botIsSpeaking = true
       self.stopAudio()
     }
     
     for result in response.resultsArray! {
       if let result = result as? StreamingRecognitionResult {
-        let topResult = (result.alternativesArray[0] as! SpeechRecognitionAlternative).transcript!.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        
-//        if (self.botIsSpeaking) {
-//          print("BOT IS SPEAKING")
-//          
-//          if (result.isFinal) {
-//              print("BOT SPEECH IS FINAL")
-//              self.botIsSpeaking = false
-//          }
-//          
-//          return
-//        }
-        
-        print(topResult)
-        
-        if (self.listeningForConversation) {
-          if (result.isFinal) {
+        if (result.isFinal) {
+          let topResult = (result.alternativesArray[0] as! SpeechRecognitionAlternative).transcript!.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+          
+          print(topResult)
+          
+          if (self.listeningForConversation) {
             let data = [
               "text": topResult,
               "withVoice": true,
@@ -162,63 +152,87 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
             
             self.listeningForConversation = false
             self.conversationData = [:]
-          }
-          
-          return
-        }
-        
-        if (self.listeningForPrompt) {
-          if (self.triggeredBotAttention(text: topResult as NSString)) {
-            self.stopAudio()
-            self.listeningForPrompt = false
-            self.attentionSound.play()
-          } else if (result.isFinal) {
-            let prompt = self.getMatchingCustomPrompt(text: topResult as NSString)
             
-            if (prompt != nil) {
-              if let responses = prompt!["responses"] as? NSArray {
-                if (responses.count > 0) {
-                  // get a random response from the options
-                  let randomIndex = Int(arc4random_uniform(UInt32(responses.count)))
-                  let response = self.correctedString(text: responses[randomIndex] as! String)
-                  
-//                  self.stopAudio()
-                  self.audioHelper.speak(text: response, emitOnSpeechEnd: nil)
-                  return
+          } else if (self.listeningForPrompt) {
+            let nsTopResult = topResult as NSString
+            
+            // Check if matches attention prompt
+            let attentionMatches = self.attentionPrompt.matches(in: topResult, options: [], range: NSMakeRange(0, nsTopResult.length))
+            
+            if (!attentionMatches.isEmpty) {
+              var strMatches = [String]()
+              
+              for index in 1..<attentionMatches[0].numberOfRanges {
+                strMatches.append(nsTopResult.substring(with: attentionMatches[0].rangeAt(index)))
+              }
+              
+              if (strMatches.count != 3) {
+                print("Attention Prompt Regex Error: The regex used for this should result in 3 groups.")
+                return
+              }
+              
+              print("ATTENTION MATCHES FOUND: \(strMatches)")
+              
+              var command = strMatches.popLast()!
+              var gettingBotAttention: Bool = false
+              
+              // If no command, just prompt the bot's attention
+              if (command.isEmpty) {
+                gettingBotAttention = true
+              }
+              // if "Hey <BOT_NAME>" is followed by either a comma, a period, an exclamation, or a space, figure out if the rest of 
+              // that string (the command) has any other content.
+              else if (command.hasPrefix(",") || command.hasPrefix(".") || command.hasPrefix("!") || command.hasPrefix(" ")) {
+                let sliced = String(command.characters.dropFirst())
+                let trimmed = sliced.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                
+                // if no content other than the the space/punctuation, just prompt the bot's attention
+                if (trimmed.isEmpty) {
+                  gettingBotAttention = true
+                } else {  // otherwise, take the trimmed command and proceed with using that as a voice command
+                  command = trimmed
+                }
+              } else {  // if the command is anything else, don't accept it.
+                return
+              }
+              
+              // Prompt the bot if that's what we've decided
+              if (gettingBotAttention) {
+                self.listeningForPrompt = false
+                self.listeningForCommand = true
+                self.attentionSound.play()
+              } else {  // Otherwise, emit a new voiceCommand event with our parsed command.
+                let data = ["text": topResult, "withVoice": true] as [String : Any]
+                NotificationCenter.default.post(name: Notification.Name("voiceCommand:new"), object: data)
+              }
+              
+            } else {  // Figure out if the query matches any the user's custom prompts
+              print("NO ATTENTION MATCHES FOUND: \(attentionMatches)")
+              let prompt = self.getMatchingCustomPrompt(text: topResult as NSString)
+              
+              if (prompt != nil) {
+                // custom prompt match was found, so find random response from the provided options, and say that.
+                if let responses = prompt!["responses"] as? NSArray {
+                  if (responses.count > 0) {
+                    // get a random response from the options
+                    let randomIndex = Int(arc4random_uniform(UInt32(responses.count)))
+                    let response = self.correctedString(text: responses[randomIndex] as! String)
+                    
+                    self.audioHelper.speak(text: response, emitOnSpeechEnd: nil)
+                    return
+                  }
                 }
               }
             }
+          } else if (self.listeningForCommand) {
+            self.listeningForCommand = false
+            self.listeningForPrompt = true
+            let data = ["text": topResult, "withVoice": true] as [String : Any]
+            NotificationCenter.default.post(name: Notification.Name("voiceCommand:new"), object: data)
           }
         }
-        
-        if (self.listeningForCommand && result.isFinal) {
-          self.listeningForCommand = false
-          self.listeningForPrompt = true
-          
-          let data = ["text": topResult, "withVoice": true] as [String : Any]
-          NotificationCenter.default.post(name: Notification.Name("voiceCommand:new"), object: data)
-        }
-        
-        if (!self.listeningForPrompt && !self.listeningForCommand && result.isFinal) {
-          self.recordAudio();
-          self.listeningForCommand = true;
-        }
       }
     }
-  }
-  
-  func triggeredBotAttention(text: NSString) -> Bool {
-    for p in self.attentionPrompts {
-      let pattern = self.correctedString(text: p as! String)
-      let regex = try! NSRegularExpression(pattern: pattern, options: [NSRegularExpression.Options.caseInsensitive])
-      let results = regex.matches(in: text as String, options: [], range: NSMakeRange(0, text.length))
-      
-      if (!results.isEmpty) {
-        return true
-      }
-    }
-    
-    return false
   }
   
   func correctedString(text: String) -> String {

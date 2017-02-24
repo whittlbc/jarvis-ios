@@ -175,18 +175,18 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
       
       if (data["actions"] as? NSDictionary) != nil {
         let actions = data["actions"] as! NSDictionary
-        var attentionPrompts = actions["attentionPropmts"] as? NSArray
+        var attentionPrompt = actions["attentionPrompt"] as? String
         var customPrompts = actions["customPrompts"] as? NSArray
         
-        if (attentionPrompts == nil) {
-          attentionPrompts = ["^(hey|ok|okay|yo) <BOT_NAME>$"]
+        if (attentionPrompt == nil) {
+          attentionPrompt = "^(hey |ok |okay |yo |)(<BOT_NAME>|Jarvis)(.*)"
         }
         
         if (customPrompts == nil) {
           customPrompts = []
         }
         
-        self.startSpeechRecognition(attentionPrompts: attentionPrompts!, customPrompts: customPrompts!)
+        self.startSpeechRecognition(attentionPrompt: attentionPrompt!, customPrompts: customPrompts!)
       }
     }
   }
@@ -205,9 +205,9 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
   }
 
   // init microphone audio recording/speech-recog service
-  func startSpeechRecognition(attentionPrompts: NSArray, customPrompts: NSArray) -> Void {
+  func startSpeechRecognition(attentionPrompt: String, customPrompts: NSArray) -> Void {
     self.audioHelper = AudioHelper()
-    self.audioRecordService = AudioRecordService(audioHelper: self.audioHelper, attentionPrompts: attentionPrompts, customPrompts: customPrompts)
+    self.audioRecordService = AudioRecordService(audioHelper: self.audioHelper, attentionPrompt: attentionPrompt, customPrompts: customPrompts)
     self.audioRecordService.perform()
   }
   
