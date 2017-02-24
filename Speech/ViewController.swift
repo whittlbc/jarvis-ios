@@ -56,6 +56,10 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
     }
   }
   
+  @IBAction func buttonClicked(_ sender: Any) {
+    self.loginController.getIntegrationOauthUrl(integrationSlug: "uber")
+  }
+  
   func setupLocationManager() -> Void {
     self.locationManager = CLLocationManager()
 
@@ -86,6 +90,23 @@ class ViewController : UIViewController, CLLocationManagerDelegate {
     NotificationCenter.default.addObserver(self, selector: #selector(handleSpeechResponse), name: NSNotification.Name(rawValue: "text:speak"), object:nil)
     
     NotificationCenter.default.addObserver(self, selector: #selector(continueConversation), name: NSNotification.Name(rawValue: "conversation:continue"), object:nil)
+    
+    NotificationCenter.default.addObserver(self, selector: #selector(openAuthUrl), name: NSNotification.Name(rawValue: "integratedUser:authed"), object:nil)
+  }
+  
+  func openAuthUrl(notification: NSNotification) {
+    if let data = notification.object as? NSDictionary {
+      let urlString = data["oauthUrl"] as? String
+      
+      if (urlString != nil) {
+        let url = URL(string: urlString!)
+        if #available(iOS 10.0, *) {
+          UIApplication.shared.open(url!)
+        } else {
+          UIApplication.shared.openURL(url!)
+        }
+      }
+    }
   }
   
   func continueConversation(notification: NSNotification) {

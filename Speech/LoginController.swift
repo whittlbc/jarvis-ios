@@ -61,4 +61,26 @@ class LoginController {
     }
   }
   
+  func getIntegrationOauthUrl(integrationSlug: String) -> Void {
+    self.requests.get(endpoint: "/integrations/oauth_url", params: ["slug": integrationSlug] as Parameters).responseJSON { response in
+      let statusCode = response.response?.statusCode
+      
+      if (statusCode == 200) {
+        let data = try! JSONSerialization.jsonObject(with: response.data!, options: []) as? [String:AnyObject]
+        
+        if (data != nil)  {
+          let authData: NSDictionary = ["slug": integrationSlug, "oauthUrl": data!["url"] as Any]
+          NotificationCenter.default.post(name: Notification.Name("integratedUser:authed"), object: authData)
+        }
+      } else if (statusCode == 1005) {
+        // Invalid User Permissions
+      } else if (statusCode == 3000) {
+        // Integration not found
+      } else {
+        // Other
+      }
+    }
+    
+  }
+  
 }
