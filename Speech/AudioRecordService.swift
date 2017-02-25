@@ -200,7 +200,9 @@ class AudioRecordService: NSObject, AudioControllerDelegate {
               if (gettingBotAttention) {
                 self.listeningForPrompt = false
                 self.listeningForCommand = true
-                self.attentionSound.play()
+//                self.attentionSound.play()
+                self.audioHelper.playAttentionPromptResponse()
+                
               } else {  // Otherwise, emit a new voiceCommand event with our parsed command.
                 let data = ["text": topResult, "withVoice": true] as [String : Any]
                 NotificationCenter.default.post(name: Notification.Name("voiceCommand:new"), object: data)

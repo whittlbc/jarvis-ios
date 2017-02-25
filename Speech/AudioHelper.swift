@@ -10,15 +10,19 @@ import UIKit
 import AVFoundation
 import AWSPolly
 
+let attentionPromptTextResponses: NSArray = ["What's up?", "Yes?"]
+
 class AudioHelper: NSObject, AVSpeechSynthesizerDelegate {
   var player: AVPlayer!
   var synth: AVSpeechSynthesizer!
   var speaking: Bool
   var speechEndData: NSDictionary?
+  var attentionPromptResponses: Array<AVPlayerItem>
   
   override init() {
     self.speaking = false
     self.speechEndData = nil
+    self.attentionPromptResponses = []
     
     super.init()
     
@@ -26,6 +30,19 @@ class AudioHelper: NSObject, AVSpeechSynthesizerDelegate {
     self.synth.delegate = self
     
     self.player = AVPlayer()
+    self.prepareAttentionPromptResponses()
+  }
+  
+  func prepareAttentionPromptResponses() -> Void {
+    for botResponse in attentionPromptTextResponses {
+      let builder = self.createSpeechURLBuilder(text: botResponse as! String)
+      
+      builder.continueOnSuccessWith { (awsTask: AWSTask<NSURL>) -> Any? in
+        let url = awsTask.result! as URL
+        self.attentionPromptResponses.append(AVPlayerItem(url: url))
+        return nil
+      }
+    }
   }
   
   func playAudioWithUrl(urlString: String) -> Void {
@@ -33,14 +50,39 @@ class AudioHelper: NSObject, AVSpeechSynthesizerDelegate {
     self.playAndSubscribeToPlayerItem(withUrl: url!)
   }
   
+  func playAttentionPromptResponse() -> Void {
+    if (self.attentionPromptResponses.count > 0 && !self.speaking) {
+      self.speaking = true
+      let randomIndex = Int(arc4random_uniform(UInt32(self.attentionPromptResponses.count)))
+      let response = self.attentionPromptResponses[randomIndex]
+      
+      // subscribe to this items onEnd event
+      NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying), name:NSNotification.Name.AVPlayerItemDidPlayToEndTime, object:response)
+      
+      self.player.replaceCurrentItem(with: response)
+      self.player.play()
+    }
+  }
+  
   func speak(text: String, emitOnSpeechEnd: NSDictionary?) -> Void {
-    if (speaking) {
+    if (self.speaking) {
       return;
     }
     
     self.speaking = true
     self.speechEndData = emitOnSpeechEnd
     
+    let builder = self.createSpeechURLBuilder(text: text)
+    
+    builder.continueOnSuccessWith { (awsTask: AWSTask<NSURL>) -> Any? in
+      let url = awsTask.result!
+      self.playAndSubscribeToPlayerItem(withUrl: url as URL)
+      
+      return nil
+    }
+  }
+  
+  func createSpeechURLBuilder(text: String) -> AWSTask<NSURL> {
     let req = AWSPollySynthesizeSpeechURLBuilderRequest()
     req.text = text
     
@@ -51,15 +93,7 @@ class AudioHelper: NSObject, AVSpeechSynthesizerDelegate {
     req.voiceId = AWSPollyVoiceId.joanna
     
     // Create an task to synthesize speech using the given synthesis input
-    let builder = AWSPollySynthesizeSpeechURLBuilder.default().getPreSignedURL(req)
-    
-    // Request the URL for synthesis result
-    builder.continueOnSuccessWith { (awsTask: AWSTask<NSURL>) -> Any? in
-      let url = awsTask.result!
-      self.playAndSubscribeToPlayerItem(withUrl: url as URL)
-      
-      return nil
-    }
+    return AWSPollySynthesizeSpeechURLBuilder.default().getPreSignedURL(req)
   }
   
   func playAndSubscribeToPlayerItem(withUrl: URL) -> Void {
