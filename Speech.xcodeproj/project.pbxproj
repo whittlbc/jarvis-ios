@@ -377,6 +377,7 @@
 				AWS_IDENTITY_POOL_ID = "us-west-2:e4b4dd94-87e7-4380-a4e3-b19b8791aad6";
 				CLANG_ENABLE_MODULES = YES;
 				COOKIE_NAME = JARVIS_COOKIE;
+				DEVELOPMENT_TEAM = "";
 				GCC_PREFIX_HEADER = "";
 				"HEADER_SEARCH_PATHS[arch=*]" = (
 					"$(inherited)",
@@ -386,7 +387,7 @@
 				);
 				INFOPLIST_FILE = Speech/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.google.speech-grpc-streaming";
+				PRODUCT_BUNDLE_IDENTIFIER = com.benWhittle.Jarvis;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SESSION_HEADER = "Jarvis-Api-Token";
 				SWIFT_OBJC_BRIDGING_HEADER = "Speech/Speech-Bridging-Header.h";
@@ -405,10 +406,11 @@
 				AWS_IDENTITY_POOL_ID = "us-west-2:e4b4dd94-87e7-4380-a4e3-b19b8791aad6";
 				CLANG_ENABLE_MODULES = YES;
 				COOKIE_NAME = JARVIS_COOKIE;
+				DEVELOPMENT_TEAM = "";
 				GCC_PREFIX_HEADER = "";
 				INFOPLIST_FILE = Speech/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.google.speech-grpc-streaming";
+				PRODUCT_BUNDLE_IDENTIFIER = com.benWhittle.Jarvis;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SESSION_HEADER = "Jarvis-Api-Token";
 				SWIFT_OBJC_BRIDGING_HEADER = "Speech/Speech-Bridging-Header.h";

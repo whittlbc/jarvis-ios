@@ -2,27 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>AWS_IDENTITY_POOL_ID</key>
-	<string>$(AWS_IDENTITY_POOL_ID)</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Jarvis would like to use your current location.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Jarvis would like to use your current location.</string>
 	<key>API_AI_KEY</key>
 	<string>$(API_AI_KEY)</string>
-	<key>SESSION_HEADER</key>
-	<string>$(SESSION_HEADER)</string>
-	<key>COOKIE_NAME</key>
-	<string>$(COOKIE_NAME)</string>
 	<key>APP_URL</key>
 	<string>$(APP_URL)</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
+	<key>AWS_IDENTITY_POOL_ID</key>
+	<string>$(AWS_IDENTITY_POOL_ID)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Speech</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -37,12 +26,36 @@
 	<string>1.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.benWhittle.Jarvis</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>jarvis</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>COOKIE_NAME</key>
+	<string>$(COOKIE_NAME)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Jarvis would like to use your current location.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Jarvis would like to use your current location.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This sample uses the microphone to record your speech and convert it to text.</string>
+	<key>SESSION_HEADER</key>
+	<string>$(SESSION_HEADER)</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
