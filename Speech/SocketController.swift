@@ -46,6 +46,17 @@ class SocketController {
         self.handleResponse(resp: resp)
       }
     }
+    
+    self.socket.on("job:update") {data, ack in
+      if let resp = data[0] as? NSDictionary {
+        let text = resp["text"] as? String
+        
+        if (text != nil) {
+          let data = ["text": text!, "prompt": [:] as NSDictionary] as [String : Any]
+          NotificationCenter.default.post(name: Notification.Name("text:speak"), object: data)
+        }
+      }
+    }
   }
   
   func sendMessage(data: NSDictionary) -> Void {
